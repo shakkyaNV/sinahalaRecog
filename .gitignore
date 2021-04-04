@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+.Rproj.user
+
+
+# R added by NV
+.Rproj
+.Rproj.user/
