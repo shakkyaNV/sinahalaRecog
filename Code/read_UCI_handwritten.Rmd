@@ -1,0 +1,145 @@
+---
+title: "To Dataset"
+author: "eNVy"
+date: 'Original: 2021-04-12, Updated `r Sys.Date()`'
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      fig.height = 4, 
+                      fig.width = 4)
+
+knitr::opts_knit$set(root.dir = "./")
+library(here)
+here()
+```
+
+
+```{r libs}
+suppressPackageStartupMessages(library(tidyverse))
+```
+
+Read whole txt with read_lines
+
+```{r}
+file = read_lines(here("Datasets_ignore/UCI pen writing/ujipenchars2.txt"),
+                  skip = 3) #, n_max = 2002)
+
+file[1]
+```
+
+Use RE and split to chunks of data
+
+Meh approach
+  
+  1. Find which rows have starting "//" comments
+  2. Nest all data within the "//" comments
+  3. split nested data into parts based on numstrokes
+
+# Test
+
+```{r}
+keys = c() # empty list to put keys in 
+char = c() # empty list to put typed chars in 
+
+# grep if fasf 
+for (i in 1:length(file)) { 
+  
+  if_key = grepl("// ASCII", file[i]) # if grep found a match on said line
+  
+  if (if_key) {                # if grep did not it will return interger(0)
+   keys = append(keys, i)
+   char = append(char, 
+                 substr(file[i], 16, 16)) # 16 is the position of letter
+  }
+}
+
+keys[1:4]
+```
+
+If the template holds, if keys are in ```keys``` lines. Then the last character of the said line should give us info about the character. 
+
+Then we can ignore the line next to it (WORD A trn_UJI_W02-01).
+The next line after gives info about how many strokes. Which inform how many lines there are before the next attemp of said char character.
+eg: if NUMSTROKES 2 -> Only 2 lines of points
+
+```{r}
+df = tibble(char, 
+            person = NA, 
+            attempt_one = NA,
+            attempt_two = NA)
+rownumber = 0
+
+for (i in keys) {
+  rownumber = rownumber + 1
+  nums = substr(file[i+2], 14, 14) # nums of keystrokes 
+  # those next nums of lines should be included into lists
+  # which will be nested unto a tibble
+  person = str_sub(file[i + 1], 16, 18) # person
+  
+  for (j in 1:nums) {
+    points_First = c() # initial null list # since there are more tries
+    
+    str_sub(file[i + 2 + j], 15, -1)  %>% # from 15th indexing char to end
+      str_split(pattern = " ") %>% 
+      map(., as.integer) -> temp
+    
+    points_First = append(points_First, temp)
+  }
+  
+  nums_two = str_sub(file[i   # line with ascii
+                          + 2 # two line WORD a trn_UJI.. + numstrokes
+                          + j + 1 # skip j number of rows of point numstrokes
+                          + 1],  # next attept line])
+                          14, 14) # nums of keystrokes in 2nd attempt
+  
+  for (k in 1:nums_two) {
+    points_Second = c()
+    
+    str_sub(file[i + 2 + j + 1 + 1 + k], 15, -1) %>% 
+      str_split(pattern = " ") %>% 
+      map(., as.integer) -> temp2
+    
+    points_Second = append(points_Second, temp2)
+  }
+  
+  df$attempt_one[rownumber] = points_First 
+  df$attempt_two[rownumber] = points_Second # tibble to be nested
+  df$person[rownumber] = person
+}
+
+```
+
+# success
+
+Write unto a csv.
+An error is thrown because .csv cannot contain list formats. (caused when called ```map(., as.interger))```
+
+Convert lists into a single string to save as flat (or unnest/unlist with imbalanced)
+
+```{r}
+set_lists_to_chars <- function(x) {
+    if(class(x) == 'list') {
+      y <- paste(unlist(x[1]), sep='', collapse=', ')
+    } 
+    else {
+      y <- x 
+    }
+    return(y)
+}
+
+df_str <- data.frame(lapply(df, set_lists_to_chars), 
+                     stringsAsFactors = F)
+
+df_str %>% head()
+```
+
+Uncomment if needed
+
+```{r}
+# write_csv(df_str, here("Data/UCI_handWritten/data.csv"))
+```
+
+Use ```parse_integer``` or ```map(.x, as.integer)``` on mutate on reading the df.
+
