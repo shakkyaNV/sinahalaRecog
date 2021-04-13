@@ -24,7 +24,7 @@ Read whole txt with read_lines
 
 ```{r}
 file = read_lines(here("Datasets_ignore/UCI pen writing/ujipenchars2.txt"),
-                  skip = 3) #, n_max = 2002)
+                  skip = 3, n_max = 2002)
 
 file[1]
 ```
@@ -66,11 +66,12 @@ eg: if NUMSTROKES 2 -> Only 2 lines of points
 
 ```{r}
 df = tibble(char, 
+            key = NA,
             person = NA, 
-            attempt_one = NA,
-            attempt_two = NA)
-rownumber = 0
+            attempt_one = "NA", # make it character so that we can replace
+            attempt_two = "NA") # it with chars
 
+rownumber = 0
 for (i in keys) {
   rownumber = rownumber + 1
   nums = substr(file[i+2], 14, 14) # nums of keystrokes 
@@ -78,12 +79,13 @@ for (i in keys) {
   # which will be nested unto a tibble
   person = str_sub(file[i + 1], 16, 18) # person
   
+  points_First = c() # initial null list # since there are more tries
+  
   for (j in 1:nums) {
-    points_First = c() # initial null list # since there are more tries
     
-    str_sub(file[i + 2 + j], 15, -1)  %>% # from 15th indexing char to end
-      str_split(pattern = " ") %>% 
-      map(., as.integer) -> temp
+    str_sub(file[i + 2 + j], 15, -1) -> temp # from 15th indexing char to end
+      # str_split(pattern = " ") %>% 
+      # map(., as.integer) -> temp
     
     points_First = append(points_First, temp)
   }
@@ -93,20 +95,25 @@ for (i in keys) {
                           + j + 1 # skip j number of rows of point numstrokes
                           + 1],  # next attept line])
                           14, 14) # nums of keystrokes in 2nd attempt
-  
+  points_Second = c()
   for (k in 1:nums_two) {
-    points_Second = c()
     
-    str_sub(file[i + 2 + j + 1 + 1 + k], 15, -1) %>% 
-      str_split(pattern = " ") %>% 
-      map(., as.integer) -> temp2
+    str_sub(file[i + 2 + j + 1 + 1 + k], 15, -1) -> temp2
+      # str_split(pattern = " ") %>% 
+      # map(., as.integer) -> temp2
     
     points_Second = append(points_Second, temp2)
   }
   
-  df$attempt_one[rownumber] = points_First 
-  df$attempt_two[rownumber] = points_Second # tibble to be nested
-  df$person[rownumber] = person
+  df$key[rownumber] = i # keys of file rownumber for late use
+  
+  df$attempt_one[rownumber] = points_First %>%  # first attempt (multiple or not keystrokes)
+    paste0(collapse = " # ")
+  
+  df$attempt_two[rownumber] = points_Second %>% # second attempt (multiple or note keystrokes)
+    paste0(collapse = " # ") # tibble to be nested
+  
+  df$person[rownumber] = person # who wrote it
 }
 
 ```
@@ -114,32 +121,29 @@ for (i in keys) {
 # success
 
 Write unto a csv.
-An error is thrown because .csv cannot contain list formats. (caused when called ```map(., as.interger))```
+An error is thrown because .csv cannot contain list formats. (caused when called ```map(., as.interger))```. 
 
 Convert lists into a single string to save as flat (or unnest/unlist with imbalanced)
-
-```{r}
-set_lists_to_chars <- function(x) {
-    if(class(x) == 'list') {
-      y <- paste(unlist(x[1]), sep='', collapse=', ')
-    } 
-    else {
-      y <- x 
-    }
-    return(y)
-}
-
-df_str <- data.frame(lapply(df, set_lists_to_chars), 
-                     stringsAsFactors = F)
-
-df_str %>% head()
-```
 
 Uncomment if needed
 
 ```{r}
-# write_csv(df_str, here("Data/UCI_handWritten/data.csv"))
+# write_csv(df, here("Data/UCI_handWritten/data.csv"))
 ```
 
 Use ```parse_integer``` or ```map(.x, as.integer)``` on mutate on reading the df.
+
+# Read with
+
+Initailise the concatted cols with
+
+```{r}
+df$attempt_one[73] %>% 
+  str_split(pattern = " # ", simplify = T) %>% 
+  str_c(collapse = " ") %>% 
+  str_split(" ") %>% 
+  map(., as.integer) %>% 
+  unlist()
+```
+
 
