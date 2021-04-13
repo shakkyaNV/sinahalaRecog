@@ -24,7 +24,7 @@ Read whole txt with read_lines
 
 ```{r}
 file = read_lines(here("Datasets_ignore/UCI pen writing/ujipenchars2.txt"),
-                  skip = 3, n_max = 2002)
+                  skip = 3) #, n_max = 2002)
 
 file[1]
 ```
@@ -128,7 +128,7 @@ Convert lists into a single string to save as flat (or unnest/unlist with imbala
 Uncomment if needed
 
 ```{r}
-# write_csv(df, here("Data/UCI_handWritten/data.csv"))
+write_csv(df, here("Data/UCI_handWritten/data.csv"))
 ```
 
 Use ```parse_integer``` or ```map(.x, as.integer)``` on mutate on reading the df.
