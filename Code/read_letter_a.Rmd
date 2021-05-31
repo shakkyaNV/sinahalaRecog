@@ -1,0 +1,131 @@
+---
+title: "Test - DTW - A"
+author: "eNVy"
+date: "5/25/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      fig.height = 6, 
+                      fig.width = 6)
+
+knitr::opts_knit$set(root.dir = "./")
+
+library(here)
+here()
+```
+
+
+```{r}
+library(tidyverse)
+library(magrittr)
+```
+
+
+```{r}
+df_raw = read_csv(here("Data/UCI_handWritten/data.csv"))
+
+df_raw %>% head() %>% 
+  rowwise() %>% 
+  transmute(
+  
+  char = char, 
+  key = key, 
+  person = person, 
+  attemp_num_one = attempt_one %>% 
+    str_split(pattern = " # ", simplify = T) %>% 
+    str_c(collapse = " ") %>% 
+    str_split(" ") %>% 
+    map(., as.integer) %>% 
+    unlist() %>% list(), 
+  
+  attemp_num_two = attempt_two %>% 
+    str_split(pattern = " # ", simplify = T) %>% 
+    str_c(collapse = " ") %>% 
+    str_split(" ") %>% 
+    map(., as.integer) %>% 
+    unlist() %>% list()) -> df
+```
+
+
+
+```{r}
+df %>% 
+  filter(char == 'a')
+```
+
+For given "a" letter, there are 120 samples (60 people x 2).
+
+Procedure for dtw as follows:
+
+  + Read data row by row
+  + Select a given row
+  + split the data into x, y coords (x in odds, y in even)
+  + visualize first
+  + ... 
+  
+```{r}
+df %>% 
+  filter(char == 'a' & person == 'W01')  %>% 
+  pull(attemp_num_one) %>% unlist() -> test_list
+
+df %>% 
+  filter(char == 'a' & person == 'W01')  %>% 
+  pull(attemp_num_two) %>% unlist() -> test_list2
+
+x = c()
+y = c()
+
+for (i in 1:length(test_list)) {
+  if (i %% 2 == 0) {
+    y = append(y, test_list[[i]])
+  } else {
+    x = append(x , test_list[[i]])
+  }
+}
+
+x2 = c()
+y2 = c()
+
+for (i in 1:length(test_list2)) {
+  if (i %% 2 == 0) {
+    y2 = append(y2, test_list2[[i]])
+  } else {
+    x2 = append(x2 , test_list2[[i]])
+  }
+}
+
+time1 = (1:length(x))
+time2 = (1:length(x2))
+```
+
+
+
+```{r}
+test_df <- data.frame(x, y, time1)
+test2_df <- data.frame(x2, y2, time2)
+
+ggplot() + geom_point(data = test_df, aes(x = x, y = y), colour = "red") + 
+  geom_point(data = test2_df, aes(x = x2, y = y2), colour = "blue") + 
+  scale_y_reverse()
+```
+
+# Time series similarity
+
+## Correlation
+
+### Pearsons correlation
+
+Issues: 
+  + How to limit the correlation (as in lower boundary for similarity)
+  + Incompatible dimensions
+
+```{r}
+# correlation for x coords
+cor(test_df[1:43, 1], test2_df$x2)
+
+# correlation for y coords
+cor(test_df[1:43, 2], test2_df$y2)
+```
+
