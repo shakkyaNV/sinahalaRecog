@@ -1,0 +1,206 @@
+---
+title: "Set To Origin"
+author: "eNVy"
+date: "6/1/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+knitr::opts_knit$set(root.dir = "./")
+
+library(here)
+here()
+```
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+df_raw = read_csv(here("Data/UCI_handWritten/data.csv"))
+
+df_raw %>% head()
+```
+
+
+```{r}
+df_raw %>% 
+  rowwise() %>% 
+  transmute(
+  
+  char = char, 
+  key = key, 
+  person = person, 
+  attemp_num_one = attempt_one %>% 
+    str_split(pattern = " # ", simplify = T) %>% 
+    str_c(collapse = " ") %>% 
+    str_split(" ") %>% 
+    map(., as.integer) %>% 
+    unlist() %>% list(), 
+  
+  attemp_num_two = attempt_two %>% 
+    str_split(pattern = " # ", simplify = T) %>% 
+    str_c(collapse = " ") %>% 
+    str_split(" ") %>% 
+    map(., as.integer) %>% 
+    unlist() %>% list()
+  )  %>% 
+  transmute(
+    
+    char = char, 
+    key = key, 
+    person = person, 
+    x1 = list(attemp_num_one[seq(1, length(attemp_num_one), 2)]),
+    y1 = list(attemp_num_one[seq(0, length(attemp_num_one), 2)]),
+    x2 = list(attemp_num_two[seq(1, length(attemp_num_two), 2)]),
+    y2 = list(attemp_num_two[seq(0, length(attemp_num_two), 2)])) -> df
+```
+
+# Set all starting points of the data to Origin (0,0)
+```{r}
+df %>% head()
+```
+All the elements of the data is set to subtract the first value of the list. So that every starting point for every written object starts at (0,0)
+
+```{r}
+df %>%
+  rowwise() %>% 
+  mutate(
+    x1 = list(c(x1 %>% unlist()) - x1[1] ),
+    y1 = list(c(y1 %>% unlist()) - y1[1] ),
+    x2 = list(c(x2 %>% unlist()) - x2[1] ),
+    y2 = list(c(y2 %>% unlist()) - y2[1] )) -> df_origin
+```
+
+```{r}
+df_origin %>% head()
+```
+
+Moving forward only the alphabetical characters will be filtered. 
+
+```{r}
+df_origin %>% 
+  filter(tolower(char) %in% letters) -> df_origin
+```
+
+```{r}
+df_origin %>%
+  rowwise() %>% 
+  mutate(
+    len_x = length(x1) 
+  ) %>% 
+  group_by(char) %>% 
+  summarise(mean_length = mean(len_x))
+
+# when ungrouped mean of approx 64 letters
+```
+
+Interpolation to provide an even scale of time and events
+
+```{r}
+# initail test with single letter
+df_origin[3,] %>% 
+  rowwise() %>% 
+    transmute(
+    x1 = x1 %>% unlist() %>% list(), 
+    y1 = y1 %>% unlist() %>% list(), 
+    new_x1 = (x1 %>% unlist() %>% approx(x = ., n = 30))[[2]] %>% list(),
+    new_y1 = (y1 %>% unlist() %>% approx(x = ., n = 30))[[2]] %>% list() 
+  ) %>% pull(new_x1)
+  
+```
+Determine the **n** based on some reasoning
+For now it will be 100
+
+```{r}
+df_origin %>% 
+  rowwise() %>% 
+  transmute(
+    char = char, 
+    key = key, 
+    person = person, 
+    inter_x1 = (x1 %>% unlist() %>% approx(x = ., n = 100))[[2]] %>% list(),
+    inter_y1 = (y1 %>% unlist() %>% approx(x = ., n = 100))[[2]] %>% list(),
+    inter_x2 = (x2 %>% unlist() %>% approx(x = ., n = 100))[[2]] %>% list(),
+    inter_y2 = (y2 %>% unlist() %>% approx(x = ., n = 100))[[2]] %>% list()
+  ) -> df_interpolated
+```
+
+Test graphs on initial data and new interpolated data
+
+
+```{r}
+ggplot() + 
+  geom_point(data = df_interpolated %>% 
+              filter(key == 1) %>% 
+              unnest(cols = c(inter_x1, inter_y1)), 
+            aes(x = inter_x1, y = inter_y1), color = "indianred4") + 
+  geom_point(data = df_origin %>% 
+              filter(key == 1) %>% 
+              unnest(cols = c(x1, y1)), 
+            aes(x = x1, y = y1), color = "slateblue4") + 
+  scale_y_reverse()
+
+# reds = new_data
+# blues = earlier data
+```
+Looks okay to me !!!
+
+# Concatenated function
+
+```{r}
+
+mostLameFuncEver <- function(n_int = 100) {
+# remove head in next line for real use-case 
+  
+df_raw %>% head() %>% 
+  rowwise() %>% 
+  transmute(
+  
+  char = char, 
+  key = key, 
+  person = person, 
+  attemp_num_one = attempt_one %>% 
+    str_split(pattern = " # ", simplify = T) %>% 
+    str_c(collapse = " ") %>% 
+    str_split(" ") %>% 
+    map(., as.integer) %>% 
+    unlist() %>% list(), 
+  
+  attemp_num_two = attempt_two %>% 
+    str_split(pattern = " # ", simplify = T) %>% 
+    str_c(collapse = " ") %>% 
+    str_split(" ") %>% 
+    map(., as.integer) %>% 
+    unlist() %>% list()
+  )  %>% 
+  
+  mutate(
+    x1 = list(attemp_num_one[seq(1, length(attemp_num_one), 2)]),
+    y1 = list(attemp_num_one[seq(0, length(attemp_num_one), 2)]),
+    x2 = list(attemp_num_two[seq(1, length(attemp_num_two), 2)]),
+    y2 = list(attemp_num_two[seq(0, length(attemp_num_two), 2)])) %>% 
+  
+  mutate(
+    x1 = list(c(x1 %>% unlist()) - x1[1] ),
+    y1 = list(c(y1 %>% unlist()) - y1[1] ),
+    x2 = list(c(x2 %>% unlist()) - x2[1] ),
+    y2 = list(c(y2 %>% unlist()) - y2[1] )) %>% 
+  
+  transmute(
+    char = char, 
+    key = key, 
+    person = person, 
+    inter_x1 = (x1 %>% unlist() %>% approx(x = ., n = n_int))[[2]] %>% list(),
+    inter_y1 = (y1 %>% unlist() %>% approx(x = ., n = n_int))[[2]] %>% list(),
+    inter_x2 = (x2 %>% unlist() %>% approx(x = ., n = n_int))[[2]] %>% list(),
+    inter_y2 = (y2 %>% unlist() %>% approx(x = ., n = n_int))[[2]] %>% list()
+  )
+}
+
+mostLameFuncEver()
+```
+
+
