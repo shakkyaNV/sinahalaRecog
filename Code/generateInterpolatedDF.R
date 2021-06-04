@@ -1,7 +1,7 @@
-mostLameFuncEver <- function(n_int = 100) {
+mostLameFuncEver <- function(df, n_int = 100) {
   # remove head in next line for real use-case 
   
-  df_raw %>% head() %>% 
+  df %>% #head() %>% 
     rowwise() %>% 
     transmute(
       
@@ -44,4 +44,18 @@ mostLameFuncEver <- function(n_int = 100) {
       inter_x2 = (x2 %>% unlist() %>% approx(x = ., n = n_int))[[2]] %>% list(),
       inter_y2 = (y2 %>% unlist() %>% approx(x = ., n = n_int))[[2]] %>% list()
     )
+}
+
+
+secondMostLameFuncEver <- function(df) {
+  df %>% 
+    select(-c(ends_with("2"), person)) %>% 
+    mutate(
+      time = c(1:100) %>% list()
+    ) %>% 
+    unnest(cols = c(time, inter_x1, inter_y1)) %>% 
+    pivot_wider(id_cols = c(char,key,time), 
+                names_from = time, 
+                values_from = c(inter_x1, inter_y1)) %>% 
+    return(df)
 }
