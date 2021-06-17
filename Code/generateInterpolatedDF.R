@@ -39,10 +39,10 @@ mostLameFuncEver <- function(df, n_int = 100) {
       char = char, 
       key = key, 
       person = person, 
-      inter_x1 = (x1 %>% unlist() %>% approx(x = ., n = n_int))[[2]] %>% list(),
-      inter_y1 = (y1 %>% unlist() %>% approx(x = ., n = n_int))[[2]] %>% list(),
-      inter_x2 = (x2 %>% unlist() %>% approx(x = ., n = n_int))[[2]] %>% list(),
-      inter_y2 = (y2 %>% unlist() %>% approx(x = ., n = n_int))[[2]] %>% list()
+      x1 = (x1 %>% unlist() %>% approx(x = ., n = n_int))[[2]] %>% list(),
+      y1 = (y1 %>% unlist() %>% approx(x = ., n = n_int))[[2]] %>% list(),
+      x2 = (x2 %>% unlist() %>% approx(x = ., n = n_int))[[2]] %>% list(),
+      y2 = (y2 %>% unlist() %>% approx(x = ., n = n_int))[[2]] %>% list()
     )
 }
 
@@ -53,9 +53,9 @@ secondMostLameFuncEver <- function(df) {
     mutate(
       time = c(1:100) %>% list()
     ) %>% 
-    unnest(cols = c(time, inter_x1, inter_y1)) %>% 
+    unnest(cols = c(time, x1, y1)) %>% 
     pivot_wider(id_cols = c(char,key,time), 
                 names_from = time, 
-                values_from = c(inter_x1, inter_y1)) %>% 
+                values_from = c(x1, y1)) %>% 
     return(df)
 }
