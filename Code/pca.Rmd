@@ -1,0 +1,79 @@
+---
+title: "PCA-cluster"
+author: "eNVy"
+date: "6/17/2021"
+output: "github_document"
+---
+
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = "./")
+here::i_am("Code/pca.rmd")
+library(here)
+here()
+```
+
+```{r, message=F, warning=F}
+library(tidyverse)
+library(tidymodels)
+```
+
+
+
+Source the full function to read the df
+```{r}
+source(here("Code/generateInterpolatedDF.R"))
+```
+
+```{r, message=F, warning=F}
+df_raw <- read_csv(here("Data/UCI_handWritten/data.csv"))
+
+df_raw %>% head()
+```
+
+```{r}
+df <- mostLameFuncEver(df = df_raw, n_int = 100) %>% 
+  secondMostLameFuncEver()
+df %>% head()
+```
+
+# PCA 
+
+```{r}
+df %>% 
+  select(-all_of(c("char", "key"))) %>% .[c(1:2), ] %>% 
+  prcomp() -> pca
+```
+
+# Cluster
+
+```{r}
+df_pca <- pca$rotation
+df_pca %>% 
+  kmeans(centers = 2) -> kmeans
+```
+
+# Visualize
+
+```{r}
+require(ggfortify)
+
+df_pca %>% 
+  bind_cols(cluster = kmeans$cluster, 
+            axis = rownames(df_pca)) %>% 
+  mutate(
+    axis = str_detect(axis, "x"), 
+    axis = case_when(axis ~ "x", !axis ~ "y"), 
+    cluster = as.factor(cluster)
+  ) %>% 
+  ggplot() + 
+  geom_point(aes(PC1, PC2, color = cluster, # color by the cluster
+                 shape = axis),  # shape by the coordinate x or y
+             alpha = 0.6, size = 2)
+ 
+  
+```
+
+Conclusion:
+
+Clustered PCA components are not seperated according to coordinate (x/y)
