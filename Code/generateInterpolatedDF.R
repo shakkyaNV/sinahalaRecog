@@ -49,13 +49,13 @@ mostLameFuncEver <- function(df, n_int = 100) {
 
 secondMostLameFuncEver <- function(df) {
   df %>% 
-    select(-c(ends_with("2"), person)) %>% 
+    select(-person) %>% # c(ends_with("2"),
     mutate(
       time = c(1:100) %>% list()
     ) %>% 
-    unnest(cols = c(time, x1, y1)) %>% 
+    unnest(cols = c(time, x1, y1, x2, y2)) %>% 
     pivot_wider(id_cols = c(char,key,time), 
                 names_from = time, 
-                values_from = c(x1, y1)) %>% 
+                values_from = c(x1, y1, x2, y2)) %>% 
     return(df)
 }
