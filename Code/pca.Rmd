@@ -16,6 +16,8 @@ here()
 ```{r, message=F, warning=F}
 library(tidyverse)
 library(tidymodels)
+library(ggbiplot)
+# devtools::install_github("vqv/ggbiplot")
 ```
 
 
@@ -39,14 +41,61 @@ df %>% head()
 
 # PCA 
 
+## This attempt is only for letters 'a' and 'b'
+
 ```{r}
 df %>% 
-  select(-all_of(c("char", "key"))) %>% .[c(1:2), ] %>% 
+  filter(char %in% c('a', 'b')) %>% 
+  select(-key) -> df_init
+```
+
+<!-- func here to split the dataset and append as rows -->
+
+```{r}
+# tidy this
+
+df_init %<>% 
+  mutate(
+    char2 = char
+  ) %>% 
+  relocate(char2, .before = "x2_1")
+
+df_init[, c(1:201)] %>% 
+  bind_rows(df_init[, c(202:402)] %>% 
+              rename_with(~sub("2", "1", .x), 
+                          .cols = !char2) %>% 
+              rename(char = char2)) -> df_splitBind
+```
+
+```{r}
+df_splitBind %>% 
+  arrange(char) %>% 
+  head()
+```
+
+
+```{r}
+# since we're only epxrimenting with x coords
+df_splitBind %>% 
+  arrange(char) %>% 
+  select(starts_with("x")) %>%
+  # select(-all_of(c("char", "key"))) %>% .[c(1:2), ] %>% 
   prcomp() -> pca
 ```
 
 # Cluster
 
+Check if new PCA elements are clustered according to letter.
+
+```{r}
+pca %>% 
+  ggbiplot(choices = c(1, 2), 
+            ellipse = T, # labels = rownames(df_splitBind %>% select(-"char")), 
+           groups = c(rep("a", 120), rep("b", 120)), 
+           var.axes = F)
+```
+
+<!--  
 ```{r}
 df_pca <- pca$rotation
 df_pca %>% 
@@ -73,7 +122,8 @@ df_pca %>%
  
   
 ```
+-->
 
-Conclusion:
+# Conclusion:
 
-Clustered PCA components are not seperated according to coordinate (x/y)
+Letters can be somewhat separated by using only 2 PCA components, which has ~80% variance explainability. 
