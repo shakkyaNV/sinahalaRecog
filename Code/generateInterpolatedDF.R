@@ -72,4 +72,5 @@ thirdMostLameFuncEver <- function(df_init) {
                 rename_with( ~ sub("2", "1", .x),
                              .cols = !char2) %>%
                 rename(char = char2))
+  
 }
