@@ -63,11 +63,12 @@ secondMostLameFuncEver <- function(df) {
 thirdMostLameFuncEver <- function(df) {
   
   df_init <- df %>%
-    mutate(char2 = char) %>%
+    mutate(char2 = char, 
+           key2 = key) %>%
     relocate(char2, .before = "x2_1")
   
-  df_init[, c(1:201)] %>%
-    bind_rows(df_init[, c(202:402)] %>%
+  df_init[, c(1:202)] %>%
+    bind_rows(df_init[, c(203:404)] %>%
                 rename_with( ~ sub("2", "1", .x),
                              .cols = !char2) %>%
                 rename(char = char2))
