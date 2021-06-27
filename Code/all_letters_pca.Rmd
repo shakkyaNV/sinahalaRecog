@@ -1,0 +1,90 @@
+---
+title: "All Letters PCA"
+author: "eNVy"
+date: "6/27/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = "./")
+```
+
+```{r here-setup, inlcude = FALSE}
+here::i_am("Code/all_letters_pca.Rmd")
+```
+
+```{r}
+library(tidyverse)
+library(magrittr)
+```
+
+# Data
+
+```{r}
+df = read_csv(here::here("Data/letters.csv"), 
+              col_types = cols(char = col_character(), 
+                               .default = col_double()))
+
+df %>% head()
+```
+
+# Selective Data for analysis
+
+```{r}
+df %<>% 
+  filter(char %in% letters)
+```
+
+# PCA
+
+```{r}
+df %>% 
+  arrange(char) %>% 
+  select(starts_with("x")) %>%
+  prcomp() -> pca_x
+
+df %>% arrange() %>% 
+  select(starts_with("y")) %>% 
+  prcomp() -> pca_y
+```
+
+
+```{r}
+pca_x %>% 
+  ggbiplot::ggbiplot(choices = c(1, 2), 
+           ellipse = T, # labels = rownames(df_splitBind %>% select(-"char")), 
+           groups = c(purrr::map(letters, ~rep(., 120)) %>% 
+             unlist()),
+           var.axes = F)
+
+
+```
+
+```{r}
+pca_y %>% 
+  ggbiplot::ggbiplot(choices = c(1, 2), 
+           ellipse = T, # labels = rownames(df_splitBind %>% select(-"char")), 
+           groups = c(purrr::map(letters, ~rep(., 120)) %>% 
+             unlist()),
+           var.axes = F)
+```
+
+# Number of PCA comps
+
+```{r}
+res_x =  pca_x$sdev^2 / sum(pca_x$sdev^2)
+res_y =  pca_y$sdev^2 / sum(pca_y$sdev^2)
+```
+
+
+```{r}
+qplot() + 
+  geom_line(aes(c(1:6), res_x[1:6]), col = "red") + 
+  geom_line(aes(c(1:6), res_y[1:6]), col = "blue") + 
+  xlab("Principal Component") + 
+  ylab("Variance Explained") +
+  ggtitle("Scree Plot") +
+  ylim(0, 1)
+```
+
