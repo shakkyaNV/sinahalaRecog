@@ -59,3 +59,16 @@ secondMostLameFuncEver <- function(df) {
                 values_from = c(x1, y1, x2, y2)) %>% 
     return(df)
 }
+
+thirdMostLameFuncEver <- function(df) {
+  
+  df_init <- df %>%
+    mutate(char2 = char) %>%
+    relocate(char2, .before = "x2_1")
+  
+  df_init[, c(1:201)] %>%
+    bind_rows(df_init[, c(202:402)] %>%
+                rename_with( ~ sub("2", "1", .x),
+                             .cols = !char2) %>%
+                rename(char = char2))
+}
