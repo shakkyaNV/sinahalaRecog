@@ -22,6 +22,8 @@ library(magrittr)
 # Data
 
 ```{r}
+
+# call all three lame funcs from generateInterpolatedDF sequentially to get the data file. df = df_raw %>% mostLameFUn.() %>% secondMost..() %>% thirdMost()
 df = read_csv(here::here("Data/letters.csv"), 
               col_types = cols(char = col_character(), 
                                .default = col_double()))
