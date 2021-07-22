@@ -72,6 +72,24 @@ pca_y %>%
            var.axes = F)
 ```
 
+# Temp PCA for letters 'a' and 'd'
+
+Letters 'a' and 'd' were chosen manually due to it's similarity when writing.
+
+```{r}
+df %>% arrange(char) %>% 
+  filter(char %in% c("a", "d")) %>% 
+  select(starts_with("x")) %>% 
+  prcomp() %>%
+  ggbiplot::ggbiplot(
+    choices = c(1, 2),
+    groups = c(map(c("a", "d"), ~ rep(., 120)) %>% unlist()),
+    ellipse = T,
+    var.axes = F)
+```
+
+
+
 # Number of PCA comps
 
 ```{r}
