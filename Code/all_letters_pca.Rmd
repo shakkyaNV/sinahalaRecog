@@ -60,7 +60,6 @@ pca_x %>%
              unlist()),
            var.axes = F)
 
-
 ```
 
 ```{r}
@@ -80,8 +79,10 @@ Letters 'a' and 'd' were chosen manually due to it's similarity when writing.
 df %>% arrange(char) %>% 
   filter(char %in% c("a", "d")) %>% 
   select(starts_with("x")) %>% 
-  prcomp() %>%
-  ggbiplot::ggbiplot(
+  prcomp() -> pca_ad
+
+
+pca_ad %>% ggbiplot::ggbiplot(
     choices = c(1, 2),
     groups = c(map(c("a", "d"), ~ rep(., 120)) %>% unlist()),
     ellipse = T,
