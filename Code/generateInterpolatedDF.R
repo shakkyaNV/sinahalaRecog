@@ -71,7 +71,7 @@ thirdMostLameFuncEver <- function(df) {
     bind_rows(df_init[, c(203:404)] %>%
                 rename_with( ~ sub("2", "1", .x),
                              .cols = !c(char2, key2)) %>%
-                rename(char = char2, 
+                dplyr::rename(char = char2, 
                        key = key2))
   
 }
