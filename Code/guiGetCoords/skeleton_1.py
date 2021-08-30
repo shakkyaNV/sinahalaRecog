@@ -1,13 +1,14 @@
-import os
-import datetime as dtime
-from pynput import keyboard
+# import os
+# import datetime as dtime
+# from pynput import keyboard
 from pynput.keyboard import Key,Listener as klistner
 from pynput.mouse import Listener as mlistener
-import sqlite3
-import pyautogui
-from time import sleep
+# import sqlite3
+# import pyautogui
+# from time import sleep
 from time import monotonic_ns
-import sys
+# import sys
+from threading import Event
 
 
 # from time import monotonic_ns() -> time incremetally in nanosecs (write this instead of dtime.datetime.now())
@@ -25,23 +26,23 @@ def keyOnPress(key):
 	Starting and stopping Mouse Listener
 	based on keybaord input
 	"""
-	if key == Key.right:
+	if key == Key.left:
+		# Stopping Listner
+		try: 
+			print("Stopping mouse Listener")
+			mouseListen.stop()
+			# get user input where correctly written
+			return False
+		except Exception as e:
+			print("Error in Stopping Mouse Listener" + str(e))
+	elif key == Key.right:
 		# starting Listner
 		try:
 			# get user input on what's going to write
 			print("Starting Listner")
 			mouseListen.start()
 		except Exception as e:
-			print("Error in starting Mouse Listner" + str(e))
-	elif key == Key.left:
-		# Stopping Listner
-		try: 
-			print("Stopping mouse listener")
-			mouseListen.stop()
-			# get user input where correctly written
-			return False
-		except Exception as e:
-			print("Error in Stopping Mouse Listener" + str(e))
+			print("Error in starting Mouse Listener" + str(e))
 
 def mouseOnMove(x, y):
 	"""
@@ -49,8 +50,9 @@ def mouseOnMove(x, y):
 	"""
 	# time = dtime.datetime.now()
 	with open('initial_test.csv', 'a') as file:
-		file.write(f"{x},{y},{monotonic_ns()}\n")
-		sleep(0.03)
+		file.write(f" {x},{y},{monotonic_ns()}\n")
+		# sleep(0.03)
+		Event().wait(0.03)
 
 def mouseOnClick(x, y, button, pressed):
 	print(f"{'Pressed' if pressed else 'Released'} at {x}, {y}")
@@ -71,7 +73,7 @@ mouseListen = mlistener(
 	on_move = mouseOnMove) 
 
 def main():
-	print(sys.executable)
+	# print(sys.executable)
 	char = str(input("Input Character: "))
 	person = str(input("Input Person ID: "))
 	id = int(input("Input unique ID: "))
